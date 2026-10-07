@@ -1,0 +1,97 @@
+#la table produit
+CREATE TABLE produit (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    boutique_id INT NOT NULL,
+    nom VARCHAR(150) NOT NULL,
+    description TEXT,
+    image VARCHAR(255),
+    prix DECIMAL(10, 2) NOT NULL,
+
+    CONSTRAINT fk_produit_boutique
+        FOREIGN KEY (boutique_id)
+        REFERENCES boutique(id)
+        ON DELETE CASCADE
+
+) ENGINE=InnoDB;
+
+#la table boutique
+CREATE TABLE boutique (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(150) NOT NULL,
+    description TEXT,
+    adresse VARCHAR(255) NOT NULL,
+    latitude DECIMAL(10, 7),
+    longitude DECIMAL(10, 7),
+    telephone VARCHAR(30),
+    est_verifie BOOLEAN DEFAULT FALSE
+) ENGINE=InnoDB;
+
+#la table offre
+CREATE TABLE offre (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    produit_id INT NOT NULL,
+    prix_initial DECIMAL(10, 2) NOT NULL,
+    prix_reduit DECIMAL(10, 2) NOT NULL,
+    pourcentage_reduction DECIMAL(5, 2),
+    quantite_disponible INT NOT NULL DEFAULT 0,
+    date_debut DATETIME NOT NULL,
+    date_fin DATETIME NOT NULL,
+    statut VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
+
+    CONSTRAINT fk_offre_produit
+        FOREIGN KEY (produit_id)
+        REFERENCES produit(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT check_offre_quantite
+        CHECK (quantite_disponible >= 0),
+
+    CONSTRAINT check_offre_prix
+        CHECK (prix_initial >= 0 AND prix_reduit >= 0),
+
+    CONSTRAINT check_offre_dates
+        CHECK (date_fin > date_debut),
+
+    CONSTRAINT check_offre_statut
+        CHECK (
+            statut IN (
+                'ACTIVE',
+                'SOLD_OUT',
+                'EXPIRED',
+                'CANCELLED'
+            )
+        )
+) ENGINE=InnoDB;
+
+#la table reservation
+CREATE TABLE reservation (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    offre_id INT NOT NULL,
+    quantite INT NOT NULL,
+    montant_total DECIMAL(10, 2) NOT NULL,
+    code_reservation VARCHAR(100) NOT NULL UNIQUE,
+    statut VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    date_reservation DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_reservation_offre
+        FOREIGN KEY (offre_id)
+        REFERENCES offre(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT check_reservation_quantite
+        CHECK (quantite > 0),
+
+    CONSTRAINT check_reservation_montant
+        CHECK (montant_total >= 0),
+
+    CONSTRAINT check_reservation_statut
+        CHECK (
+            statut IN (
+                'PENDING',
+                'CONFIRMED',
+                'CANCELLED',
+                'COMPLETED',
+                'EXPIRED'
+            )
+        )
+) ENGINE=InnoDB;
